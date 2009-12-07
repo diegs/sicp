@@ -44,9 +44,11 @@
 ;exercise 2.1 - make-rat that handles positive and negative arguments
 (define (sign x) (if (< x 0) -1 1))
 (define (make-rat n d)
-  (let ((s (* (sign n) (sign d)))
-	(g (gcd (abs n) (abs d))))
-    (cons (* s (/ (abs n) g)) (/ (abs d) g))))
+  (let ((num (abs n))
+	(denom (abs d))
+	(s (* (sign n) (sign d)))
+	(g (gcd numer denom)))
+    (cons (* s (/ numer g)) (/ denom g))))
 
 ;exercise 2.2 - abstraction for a line segment made up of points
 (define (make-point x y) (cons x y))
@@ -58,11 +60,15 @@
 (define (end-segment s) (cdr s))
 
 (define (average x y) (/ (+ x y) 2))
+(define (midpoint p1 p2)
+  (make-point (average (x-point p1)
+		       (x-point p2))
+	      (average (y-point p1)
+		       (y-point p2))))
+
 (define (midpoint-segment s)
-  (make-point (average (x-point (start-segment s))
-		       (x-point (end-segment s)))
-	      (average (y-point (start-segment s))
-		       (y-point (end-segment s)))))
+  (midpoint (start-segment s)
+	    (end-segment s)))
 
 (define (print-point p)
   (display "(")
@@ -93,11 +99,13 @@
   (print-segment (wid rect))
   (display ")"))
 
+(define (dist-points p1 p2)
+  (sqrt (+ (square (- (x-point p1) (x-point p2)))
+	   (square (- (y-point p1) (y-point p2))))))
+
 (define (segment-length s)
-  (sqrt (+ (square (- (x-point (start-segment s))
-		      (x-point (end-segment s))))
-	   (square (- (y-point (start-segment s))
-		      (y-point (end-segment s)))))))
+  (dist-points (start-segment s)
+	       (end-segment s)))
 
 (define (perimeter rect)
   (+ (* 2 (segment-length (len rect)))
@@ -154,7 +162,7 @@
 ;; (lambda (f) (lambda (x) (f (((lambda (g) (lambda (y) y)) f) x))))
 ;; (lambda (f) (lambda (x) (f x)))
 
-;; ; explicit definition of 1, 2 and +
+;; ;explicit definition of 1, 2 and +
 ;; (define one (lambda (f) (lambda (x) (f x))))
 ;; (define two (lambda (f) (lambda (x) (f (f x)))))
 ;; (define + (m n) (lambda (f) (lambda (x) ((m f) ((n f) x)))))
@@ -289,4 +297,6 @@
 ;tolerance is approximately added. this means that more operations means
 ;more expansion of tolerance, so it's less "tight"
 
-;exercise 2.15
+;exercise 2.15 - skipped
+
+;exercise 2.16 - skipped
