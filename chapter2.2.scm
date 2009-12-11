@@ -7,15 +7,15 @@
 ;exercise 2.17 - last-pair procedure
 (define (last-pair list)
   (if (null? (cdr list))
-      (car list)
+      list
       (last-pair (cdr list))))
 (last-pair (list 23 72 149 34))
 
 ;exercise 2.18 - reverse procedure
 (define (reverse list)
   (define (reverse-iter list accum)
-    (if (null? (cdr list))
-	(cons (car list) accum)
+    (if (null? list)
+	accum
 	(reverse-iter (cdr list) (cons (car list) accum))))
   (reverse-iter list ()))
 (reverse (list 1 4 9 16 25))
@@ -46,28 +46,27 @@
 ;recursive plan.
 
 ;exercise 2.20 - return numbers of same parity, arbitrary number of arguments
-;note: this procedure computes parity of each element of equal parity in the
-;list twice (except the first and last elements). it could be made more
-;efficient by caching and reusing the parity of the first element.
 (define (same-parity . x)
   (define (parity y)
     (modulo y 2))
-  (define (same-parity-recur x)
-    (cond ((null? (cdr x)) x)
-	  ((= (parity (car x))
-	      (parity (car (cdr x))))
-	   (cons (car x) (same-parity-recur (cdr x))))
-	  (else
-	   (same-parity-recur (cons (car x) (cdr (cdr x)))))))
-    (same-parity-recur x))
+  (define (same-parity-recur x p)
+    (cond ((null? x) x)
+	  ((= p (parity (car x)))
+	   (cons (car x) (same-parity-recur (cdr x) p)))
+	  (else (same-parity-recur (cdr x) p))))
+  (same-parity-recur x (parity (car x))))
+(same-parity 1 2 3 4 5 6 7)
+(same-parity 2 3 4 5 6 7)
 
 ;exercise 2.21 - fill in square-list definitions
 (define (square-list-1 items)
   (if (null? items)
-      ()
+      nil
       (cons (* (car items) (car items)) (square-list-1 (cdr items)))))
 (define (square-list-2 items)
   (map (lambda (x) (* x x)) items))
+(square-list-1 (list 1 2 3 4 5))
+(square-list-2 (list 1 2 3 4 5))
 
 ;exercise 2.22 - why does iterative mess up ordering
 ;a) naive iterative approach always inserts current entry at head of
@@ -87,7 +86,7 @@
           (list 57 321 88))
 
 ;exercse 2.24 - example tree
-;(list 1 (list 2 (list 3 4)))
+(define x (list 1 (list 2 (list 3 4))))
 ;Value 11: (1 (2 (3 4)))
 ; (1 (2 (3 4))) => (2 (3 4)) => (3 4) => 4
 ; |                 |            |
@@ -115,54 +114,35 @@
 ;Value 20: ((1 2 3) (4 5 6))
 
 ;exercise 2.27 - deep reverse
-;loop invariant: put head onto the list and process what's next
 (define (deep-reverse l)
   (define (deep-reverse-iter l accum)
-    (cond ((null? (cdr l))
-	   (if (list? (car l))
-	       (cons (deep-reverse-iter (car l) ()) accum)
-	       (cons (car l) accum)))
-	  (else
-	   (if (list? (car l))
-	       (deep-reverse-iter (cdr l)
-				  (cons (deep-reverse-iter (car l) ()) accum))
-	       (deep-reverse-iter (cdr l)
-				  (cons (car l) accum))))))
+    (let ((left (cons (if (pair? (car l))
+			  (deep-reverse-iter (car l) ())
+			  (car l))
+		      accum)))
+      (if (pair? (cdr l))
+	  (deep-reverse-iter (cdr l) left)
+	  left)))
   (deep-reverse-iter l ()))
 
 (define x (list (list 1 2) (list 3 4)))
 (reverse x)
 (deep-reverse x)
 
-;cleaned up slightly
-(define (deep-reverse l)
-  (define (deep-reverse-iter l accum)
-    (let ((left-action (if (list? (car l))
-			   (lambda (l) (deep-reverse-iter (car l) ()))
-			   (lambda (l) (car l)))))
-      (cond ((null? (cdr l))
-	     (cons (left-action l) accum))
-	    (else
-	     (deep-reverse-iter (cdr l)
-				(cons (left-action l) accum))))))
-  (deep-reverse-iter l ()))
-
 ;exercise 2.28 - fringe, returns leaves of tree flattened in left-to-right
-(define x (list (list 1 2) (list 3 4)))
-
-;depth first search right to left, building up tree from leaves
 (define (fringe l)
   (define (fringe-inner l accum)
-    (if (null? (cdr l))
-	(if (list? (car l))
-	    (fringe-inner (car l) accum)
-	    (cons (car l) accum))
-	(if (list? (car l))
-	    (fringe-inner (car l) (fringe-inner (cdr l) accum))
-	    (cons (car l) (fringe-inner (cdr l) accum)))))
+    (let ((right (if (pair? (cdr l))
+		     (fringe-inner (cdr l) accum)
+		     accum)))
+      (if (pair? (car l))
+	  (fringe-inner (car l) right)
+	  (cons (car l) right))))
   (fringe-inner l ()))
 
+(define x (list (list 1 2) (list 3 4)))
 (fringe x)
+(fringe (list x x))
 
 ;exercse 2.29 - binary mobile
 ;part a: makers and selectors
@@ -196,9 +176,10 @@
   (+ (branch-weight (left-branch mobile))
      (branch-weight (right-branch mobile))))
 
-(define x (make-mobile (make-branch 2 (make-mobile (make-branch 3 5)
-						       (make-branch 1 6)))
-			   (make-branch 4 5)))
+(define x (make-mobile (make-branch 2
+				    (make-mobile (make-branch 3 5)
+						 (make-branch 1 6)))
+		       (make-branch 4 5)))
 (total-weight x)
 
 ;part c: balanced mobile - is each branch's torque*weight balanced,
@@ -216,7 +197,7 @@
   (and (= (torque (left-branch mobile))
 	  (torque (right-branch mobile)))
        (branch-balanced? (left-branch mobile))
-       (branch-balanced? (right-branch mobile)))))
+       (branch-balanced? (right-branch mobile))))
 
 (define y (make-mobile (make-branch 2 3)
 		       (make-branch 6 1)))
@@ -265,6 +246,109 @@
 
 (subsets (list 1 2 3))
 
-;exercise 2.33
-(define (map p sequence)
-  (accumulate (lambda (x y) ) nil sequence))
+;common interfaces
+(define (filter predicate sequence)
+  (cond ((null? sequence) nil)
+        ((predicate (car sequence))
+         (cons (car sequence)
+               (filter predicate (cdr sequence))))
+        (else (filter predicate (cdr sequence)))))
+
+(define (enumerate-tree tree)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (list tree))
+        (else (append (enumerate-tree (car tree))
+                      (enumerate-tree (cdr tree))))))
+
+(define (accumulate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumulate op initial (cdr sequence)))))
+
+;exercise 2.33 - define primitives in terms of common interfaces
+;; (define (map p sequence)
+;;   (accumulate (lambda (x y) (cons (p x) y)) nil sequence))
+;; (map square (list 1 2 3 4 5))
+
+;; (define (append seq1 seq2)
+;;   (accumulate cons seq2 seq1))
+;; (append (list 1 2 3) (list 4 5 6))
+
+;; (define (length sequence)
+;;   (accumulate (lambda (x y) (+ y 1)) 0 sequence))
+;; (length (list 1 2 3 4 5))
+
+;exercise 2.34 - horner's rule
+(define (horner-eval x coefficient-sequence)
+  (accumulate (lambda (this-coeff higher-terms)
+		(+ this-coeff
+		   (* x
+		      (if (pair? higher-terms)
+			  (horner-eval x higher-terms)
+			  higher-terms))))
+              0
+              coefficient-sequence))
+(horner-eval 2 (list 1 3 0 5 0 1))
+
+;exercise 2.35 count-leaves as accumulation
+(define (count-leaves t)
+  (accumulate + 0 (map (lambda (x)
+			   (if (pair? x)
+			       (count-leaves x)
+			       1)) t)))
+(define x (list (list 1 2) (list 3 4)))
+(count-leaves x)
+
+;exercise 2.36 - accumulate-n accumulates sequence of sequences
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate op init (map (lambda (x) (car x)) seqs))
+            (accumulate-n op init (map (lambda (x) (cdr x)) seqs)))))
+(accumulate-n + 0 (list (list 1 2 3)
+			(list 4 5 6)
+			(list 7 8 9)
+			(list 10 11 12)))
+
+;exercise 2.37 - matrices
+;this should check for proper dimensionality first
+(define (dot-product v w)
+  (accumulate + 0 (map * v w)))
+(define (matrix-*-vector m v)
+  (map (lambda (x) (dot-product x v)) m))
+(define (transpose mat)
+  (accumulate-n cons () mat))
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (x) (map (lambda (y) (dot-product x y)) cols)) m)))
+
+(define m (list (list 1 2 3 4) (list 4 5 6 6) (list 6 7 8 9)))
+(define v (list 6 4 7 2))
+(dot-product v v)
+(matrix-*-vector m v)
+(transpose m)
+(matrix-*-matrix m m)
+
+;exercise 2.38 - foldl and foldr
+;; (define (fold-left op initial sequence)
+;;   (define (iter result rest)
+;;     (if (null? rest)
+;;         result
+;;         (iter (op result (car rest))
+;;               (cdr rest))))
+;;   (iter initial sequence))
+
+(fold-right / 1 (list 1 2 3))
+(fold-left / 1 (list 1 2 3))
+(fold-right list nil (list 1 2 3))
+(fold-left list nil (list 1 2 3))
+;commutivity is the property of op to satisfy foldr = foldl
+
+;exercise 3.29 - reverse in terms of foldr and foldl
+(define (reverse sequence)
+  (fold-right (lambda (x y) (append y (list x))) nil sequence))
+(reverse (list 1 2 3 4 5))
+(define (reverse sequence)
+  (fold-left (lambda (x y) (cons y x)) nil sequence))
+(reverse (list 1 2 3 4 5))
