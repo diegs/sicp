@@ -247,6 +247,11 @@
 (subsets (list 1 2 3))
 
 ;common interfaces
+(define (enumerate-interval low high)
+  (if (> low high)
+      nil
+      (cons low (enumerate-interval (+ low 1) high))))
+(enumerate-interval 2 7)
 (define (filter predicate sequence)
   (cond ((null? sequence) nil)
         ((predicate (car sequence))
@@ -345,10 +350,84 @@
 (fold-left list nil (list 1 2 3))
 ;commutivity is the property of op to satisfy foldr = foldl
 
-;exercise 3.29 - reverse in terms of foldr and foldl
+;exercise 2.39 - reverse in terms of foldr and foldl
 (define (reverse sequence)
   (fold-right (lambda (x y) (append y (list x))) nil sequence))
 (reverse (list 1 2 3 4 5))
 (define (reverse sequence)
   (fold-left (lambda (x y) (cons y x)) nil sequence))
 (reverse (list 1 2 3 4 5))
+
+;exercise 2.40 - unique-pairs sucht that 1<=j<i<=n
+(define (flatmap proc seq)
+  (accumulate append nil (map proc seq)))
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+(define (make-pair-sum pair)
+  (list (car pair) (cadr pair) (+ (car pair) (cadr pair))))
+
+(define (unique-pairs n)
+  (flatmap (lambda (x) (map (lambda (y) (list x y))
+			    (enumerate-interval 1 (- x 1))))
+	   (enumerate-interval 1 n)))
+(unique-pairs 5)
+
+;; (define (prime-sum-pairs n)
+;;   (map make-pair-sum
+;;        (filter prime-sum?
+;; 	       (unique-pairs n))))
+;; (prime-sum-pairs 5)
+
+;exercise 2.41 - find triples of distinct ordered i,j,k less than or equal to n
+;that sum to given integer s
+(define (find-triples-with-sum n s)
+  (define (make-triple-sum triple)
+    (append triple (list (fold-right + 0 triple))))
+  (define (sums-to-s? triple)
+    (= s (fold-right + 0 triple)))
+  (define (unique-triples n)
+    (flatmap (lambda (z) (flatmap
+			  (lambda (y) (map (lambda (x) (list x y z))
+					   (enumerate-interval 1 (- y 1))))
+			  (enumerate-interval 1 (- z 1))))
+	     (enumerate-interval 1 n)))
+  (map make-triple-sum
+       (filter sums-to-s?
+	       (unique-triples n))))
+(find-triples-with-sum 20 14)
+
+;exercise 2.42 - k queens problem
+(define (queens board-size)
+  (define empty-board nil)
+  (define (adjoin-position row k others)
+    (append others (list (cons k row))))
+  (define (remove item sequence)
+    (filter (lambda (x) (not (= (car x) (car item))))
+	    sequence))
+  (define (safe? k positions)
+    (let ((kth (car (filter (lambda (x) (= (car x) k)) positions))))
+      (fold-right (lambda (position accum)
+		    (and accum (not (colinear? position kth))))
+		  #t
+		  (remove kth positions))))
+  (define (colinear? position k)
+    (or (= (cdr position) (cdr k))
+	(= (abs (- (cdr k) (cdr position)))
+	   (abs (- (car k) (car position))))))
+  (define (queen-cols k)  
+    (if (= k 0)
+        (list empty-board)
+        (filter
+         (lambda (positions) (safe? k positions))
+         (flatmap
+          (lambda (rest-of-queens)
+            (map (lambda (new-row)
+                   (adjoin-position new-row k rest-of-queens))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (- k 1))))))
+  (queen-cols board-size))
+
+;exercise 2.43 - slow queens
+;this is much slower because it re-solves the k-1 case
+;for each row attempted (which in turn, does the same).
+;(board-size)^(board-size) time instead of board-size time
