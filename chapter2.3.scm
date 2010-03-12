@@ -39,4 +39,3 @@
 ;quote. Explain.
 
 ;she is quoting the list (quote abracadabra), so the car of that is quote
-
