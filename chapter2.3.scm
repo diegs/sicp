@@ -286,3 +286,96 @@
 (union-set '(1 3 5 7) '(2 4 6 8))
 
 ;sets as binary trees
+(define (entry tree) (car tree))
+
+(define (left-branch tree) (cadr tree))
+
+(define (right-branch tree) (caddr tree))
+
+(define (make-tree entry left right)
+  (list entry left right))
+
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+	((= x (entry set)) true)
+	((< x (entry set))
+	 (element-of-set? x (left-branch set)))
+	((> x (entry set))
+	 (element-of-set? x (right-branch set)))))
+
+(define (adjoin-set x set)
+  (cond ((null? set) (make-tree x '() '()))
+	((= x (entry set)) set)
+	((< x (entry set))
+	 (make-tree (entry set)
+		    (adjoin-set x (left-branch set))
+		    (right-branch set)))
+	((> x (entry set))
+	 (make-tree (entry set)
+		    (left-branch set)
+		    (adjoin-set x (right-branch set))))))
+
+;Exercise 2.63: compare two tree->list procedures
+(define (tree->list-1 tree)
+  (if (null? tree)
+      '()
+      (append (tree->list-1 (left-branch tree))
+	      (cons (entry tree)
+		    (tree->list-1 (right-branch tree))))))
+
+(define (tree->list-2 tree)
+  (define (copy-to-list tree result-list)
+    (if (null? tree)
+	result-list
+	(copy-to-list (left-branch tree)
+		      (cons (entry tree)
+			    (copy-to-list (right-branch tree)
+					  result-list)))))
+  (copy-to-list tree '()))
+
+;(a) do the two procedures produce the same result for every tree?
+;
+;the first creates a list of in-order tree traversal.  the second also
+;creates a list of in-order tree traversal.
+(define make-test-tree
+  (adjoin-set 1
+	      (adjoin-set 2
+			  (adjoin-set 4
+				      (adjoin-set 3
+						  (adjoin-set 7 '()))))))
+(tree->list-1 make-test-tree)
+(tree->list-2 make-test-tree)
+
+;(b) do the two procedures have the same order of growth for a
+;balanced tree?
+;
+;the first constantly appends right tree pieces onto the left tree,
+;which is o(n), so the result is O(n^2). whereas the second builds up
+;the result only once, right to left, which is O(n).
+
+;Exercise 2.64: questions about the following partial-tree procedure:
+(define (list->tree elements)
+  (car (partial-tree elements (length elements))))
+
+(define (partial-tree elts n)
+  (if (= n 0)
+      (cons '() elts)
+      (let ((left-size (quotient (- n 1) 2)))
+	(let ((left-result (partial-tree elts left-size)))
+	  (let ((left-tree (car left-result))
+		(non-left-elts (cdr left-result))
+		(right-size (- n (+ left-size 1))))
+	    (let ((this-entry (car non-left-elts))
+		  (right-result (partial-tree (cdr non-left-elts)
+					      right-size)))
+	      (let ((right-tree (car right-result))
+		    (remaining-elts (cdr right-result)))
+		(cons (make-tree this-entry left-tree right-tree)
+		      remaining-elts))))))))
+;(a) explain how partial-tree works. draw tree for '(1 3 5 7 9 11)
+;
+;(answer)
+
+;(b) what is the order growth for list->tree?
+;
+;(answer)
