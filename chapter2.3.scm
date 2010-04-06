@@ -372,10 +372,23 @@
 		    (remaining-elts (cdr right-result)))
 		(cons (make-tree this-entry left-tree right-tree)
 		      remaining-elts))))))))
+
 ;(a) explain how partial-tree works. draw tree for '(1 3 5 7 9 11)
 ;
-;(answer)
+;it recursively builds up the left tree, the center node, and the right tree
+;by partitioning the list into three pieces. based on the way it divides
+;the left and right portions, it's slightly "right-tilted":
+;
+;      5
+;    /   \
+;   1     9
+;  / \   / \
+; ()  3 7  11
 
 ;(b) what is the order growth for list->tree?
 ;
-;(answer)
+;(1) length elements is O(n)
+;(2) at each step, we build a left result and right result and then we make-tree
+;    them, which is O(3)
+;(3) we build n/2 such nodes (since n/2 nodes are leaves), which leads me to believe
+;    that this whole thing is O(3n/2). this is because the list is ordered.
