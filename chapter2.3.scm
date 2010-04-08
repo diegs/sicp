@@ -349,7 +349,7 @@
 ;(b) do the two procedures have the same order of growth for a
 ;balanced tree?
 ;
-;the first constantly appends right tree pieces onto the left tree,
+;the first each right tree node is appended onto the left tree,
 ;which is o(n), so the result is O(n^2). whereas the second builds up
 ;the result only once, right to left, which is O(n).
 
@@ -392,3 +392,20 @@
 ;    them, which is O(3)
 ;(3) we build n/2 such nodes (since n/2 nodes are leaves), which leads me to believe
 ;    that this whole thing is O(3n/2). this is because the list is ordered.
+
+;Exercise 2.65: implement union-set and intersection-set for sets implemented as
+;(balanced) binary trees.
+;
+;not going to implement because i have to go back and rename stuff, but my strategy
+;is to use O(n) list->tree and tree->list operators, combined with
+;O(n) union/intersect-sets-of-ordered-lists operators, to get what i want.
+
+;Exercise 2.66: implement lookup procedure for where the case is structured
+;as a binary tree ordered by the numerical value of the keys
+(define (lookup given-key set-of-records)
+  (cond ((null? set-of-records) false)
+	((equal? given-key (key (entry set-of-records)))
+	 (entry set-of-records))
+	((< given-key (key (entry set-of-records)))
+	 (lookup given-key (left-tree set-of-records)))
+	(else (lookup given-key (right-tree set-of-records)))))
