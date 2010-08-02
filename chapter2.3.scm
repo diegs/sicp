@@ -518,4 +518,47 @@
 (define (generate-huffman-tree pairs)
   (successive-merge (make-leaf-set pairs)))
 
-(define (successive-merge leaf-set))
+(define (successive-merge leaf-set)
+  (cond ((null? leaf-set) '())
+	((null? (cdr leaf-set)) (car leaf-set))
+	(else (let ((left (car leaf-set))
+		    (right (cadr leaf-set))
+		    (rest (cddr leaf-set)))
+		(successive-merge (adjoin-set
+				   (make-code-tree left right)
+				   rest))))))
+
+;; *Exercise 2.70:* Use `generate-huffman-tree' (*Note Exercise 2-69::)
+;; to generate a corresponding Huffman tree, and use `encode' (*Note
+
+;; Exercise 2-68::) to encode the following message
+
+(define fifties-tree (generate-huffman-tree
+		      (list '(A 2) '(BOOM 1) '(GET 2) '(JOB 2)
+			    '(NA 16) '(SHA 3) '(YIP 9) '(WAH 1))))
+
+(define fifties-msg (encode '(Get a job
+				  Sha na na na na na na na na
+				  Get a job
+				  Sha na na na na na na na na
+				  Wah yip yip yip yip yip yip yip yip yip
+				  Sha boom)
+			    fifties-tree))
+
+(decode fifties-msg fifties-tree)
+
+;; *Exercise 2.71:* Suppose we have a Huffman tree for an alphabet of
+;; n symbols, and that the relative frequencies of the symbols are 1,
+;; 2, 4, ..., 2^(n-1).  Sketch the tree for n=5; for n=10.  In such a
+;; tree (for general n) how may bits are required to encode the most
+;; frequent symbol?  the least frequent symbol?
+
+; (skipped)
+
+;; *Exercise 2.71:* Suppose we have a Huffman tree for an alphabet of
+;; n symbols, and that the relative frequencies of the symbols are 1,
+;; 2, 4, ..., 2^(n-1).  Sketch the tree for n=5; for n=10.  In such a
+;; tree (for general n) how may bits are required to encode the most
+;; frequent symbol?  the least frequent symbol?
+
+; (skipped)
